@@ -8,23 +8,33 @@ datasource db {
 }
 
 model User {
-  createdAt    DateTime      @default(now()) @db.Timestamptz(6)
+  id           String        @id @default(cuid())
+  name         String
   email        String        @unique
-  id           Int           @id @default(autoincrement())
-  name         String?
-  updatedAt    DateTime      @db.Timestamptz(6)
-  username     String?
+  passwordHash String
+  createdAt    DateTime      @default(now())
   transactions Transaction[]
+  sessions     Session[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Transaction {
-  amount      Int
-  createdAt   DateTime @default(now()) @db.Timestamptz(6)
-  description String?
-  id          Int      @id @default(autoincrement())
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
   type        String
-  userId      Int
-  user        User     @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  amount      Decimal
+  category    String?
+  description String?
+  date        DateTime
+  createdAt   DateTime @default(now())
 
-  @@index([userId], map: "Transaction_userId_idx_a489d58a")
+  @@index([userId])
 }
