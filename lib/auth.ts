@@ -1,61 +1,66 @@
-import { cookies, headers } from "next/headers";
-import { prisma } from "./prisma";
+import { cookies } from "next/headers";
+import { prisma } from "@/lib/prisma";
 
-export interface AuthUser {
-  id: string;
-  name: string;
-  email: string;
+const SESSION_COOKIE = "expense_session";
+const SESSION_DURATION = 7 * 24 * 60 * 60 * 1000;
+
+export async function createSession(userId: string) {
+  const expiresAt = new Date(Date.now() + SESSION_DURATION);
+
+  const session = await prisma.session.create({
+    data: { userId, expiresAt },
+  });
+
+  const cookieStore = await cookies();
+  cookieStore.set(SESSION_COOKIE, session.id, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    expires: expiresAt,
+    path: "/",
+  });
+
+  return session;
 }
 
-export async function getCurrentUser(): Promise<AuthUser> {
+export async function getSession() {
   const cookieStore = await cookies();
-  const headerStore = await headers();
+  const sessionId = cookieStore.get(SESSION_COOKIE)?.value;
 
-  const userIdFromCookie =
-    cookieStore.get("userId")?.value ||
-    cookieStore.get("session_user")?.value ||
-    cookieStore.get("session_token")?.value;
+  if (!sessionId) return null;
 
-  const userIdFromHeader = headerStore.get("x-user-id");
-  const targetId = userIdFromCookie || userIdFromHeader;
+  const session = await prisma.session.findUnique({
+    where: { id: sessionId },
+    include: { user: true },
+  });
 
-  if (targetId) {
-    try {
-      const existingUser = await prisma.user.findUnique({
-        where: { id: targetId },
-        select: { id: true, name: true, email: true },
-      });
-      if (existingUser) {
-        return existingUser;
-      }
-    } catch {
-      // Fallback jika database belum aktif
-    }
+  if (!session) {
+    cookieStore.delete(SESSION_COOKIE);
+    return null;
   }
 
-  try {
-    const firstUser = await prisma.user.findFirst({
-      select: { id: true, name: true, email: true },
-    });
-    if (firstUser) {
-      return firstUser;
-    }
-
-    const newUser = await prisma.user.create({
-      data: {
-        name: "Princess",
-        email: "princess@keuanganku.app",
-        passwordHash: "$2a$12$secureDemoHashedPassword12345",
-      },
-      select: { id: true, name: true, email: true },
-    });
-
-    return newUser;
-  } catch {
-    return {
-      id: "user-default-01",
-      name: "Princess",
-      email: "princess@keuanganku.app",
-    };
+  if (session.expiresAt <= new Date()) {
+    await prisma.session.delete({ where: { id: session.id } });
+    cookieStore.delete(SESSION_COOKIE);
+    return null;
   }
+
+  return session;
+}
+
+export async function getCurrentUser() {
+  const session = await getSession();
+  if (!session) return null;
+  return session.user;
+}
+
+export async function destroySession() {
+  const cookieStore = await cookies();
+  const sessionId = cookieStore.get(SESSION_COOKIE)?.value;
+
+  if (sessionId) {
+    await prisma.session.deleteMany({ where: { id: sessionId } });
+  }
+
+  cookieStore.delete(SESSION_COOKIE);
 }
