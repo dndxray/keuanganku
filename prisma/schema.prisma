@@ -1,29 +1,30 @@
-   generator client {
-     provider = "prisma-client-js"
-   }
+generator client {
+  provider = "prisma-client-js"
+}
 
-   datasource db {
-     provider = "postgresql"
-     url      = env("DATABASE_URL")
-   }
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
 
-   model User {
-     id           String        @id @default(cuid())
-     name         String
-     email        String        @unique
-     passwordHash String
-     createdAt    DateTime      @default(now())
-     transactions Transaction[]
-   }
+model User {
+  createdAt    DateTime      @default(now()) @db.Timestamptz(6)
+  email        String        @unique
+  id           Int           @id @default(autoincrement())
+  name         String?
+  updatedAt    DateTime      @db.Timestamptz(6)
+  username     String?
+  transactions Transaction[]
+}
 
-   model Transaction {
-     id          String   @id @default(cuid())
-     userId      String
-     user        User     @relation(fields: [userId], references: [id])
-     type        String   // "income" atau "expense"
-     amount      Decimal
-     category    String?
-     description String?
-     date        DateTime
-     createdAt   DateTime @default(now())
-   }
+model Transaction {
+  amount      Int
+  createdAt   DateTime @default(now()) @db.Timestamptz(6)
+  description String?
+  id          Int      @id @default(autoincrement())
+  type        String
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([userId], map: "Transaction_userId_idx_a489d58a")
+}
