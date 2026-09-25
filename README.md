@@ -1,3 +1,9 @@
+<img width="1553" height="791" alt="WhatsApp Image 2026-09-25 at 09 46 11" src="https://github.com/user-attachments/assets/6954c562-2e5c-4917-8b0a-b70a109aeaa4" />
+<img width="1600" height="749" alt="WhatsApp Image 2026-09-25 at 09 46 34" src="https://github.com/user-attachments/assets/0d97bd56-0855-41ae-9d53-3687c514c50e" />
+<img width="1600" height="730" alt="WhatsApp Image 2026-09-25 at 09 47 59" src="https://github.com/user-attachments/assets/20bab217-aacc-4fe0-b3ae-a9953faaad40" />
+<img width="1600" height="736" alt="WhatsApp Image 2026-09-25 at 09 47 59 (1)" src="https://github.com/user-attachments/assets/809829a1-094c-4547-a027-bbf8e3c628c7" />
+<img width="1600" height="816" alt="WhatsApp Image 2026-09-25 at 09 48 35" src="https://github.com/user-attachments/assets/8d9f82b6-026a-493a-af8f-1db16a7904ea" />
+<img width="1600" height="1000" alt="WhatsApp Image 2026-09-25 at 09 45 11" src="https://github.com/user-attachments/assets/f7d98b3c-3de7-4428-84ac-7215f83c026c" />
 # KeuanganKu
 
 Aplikasi web Expense Tracker yang memungkinkan mahasiswa mengelola keuangan pribadinya secara sederhana. Pengguna dapat membuat akun, masuk ke aplikasi, mencatat pemasukan dan pengeluaran, melihat riwayat transaksi, serta mengetahui kondisi keuangannya melalui informasi saldo, total pemasukan, dan total pengeluaran. Setiap pengguna hanya dapat mengakses dan mengelola data transaksi miliknya sendiri.
