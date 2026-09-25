@@ -29,10 +29,12 @@ model Transaction {
   id          String   @id @default(cuid())
   userId      String
   user        User     @relation(fields: [userId], references: [id])
-  type        String // "income" atau "expense"
+  type        String
   amount      Decimal
   category    String?
   description String?
   date        DateTime
   createdAt   DateTime @default(now())
+
+  @@index([userId])
 }
