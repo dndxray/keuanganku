@@ -1,36 +1,66 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# KeuanganKu
 
-## Getting Started
+Aplikasi web Expense Tracker yang memungkinkan mahasiswa mengelola keuangan pribadinya secara sederhana. Pengguna dapat membuat akun, masuk ke aplikasi, mencatat pemasukan dan pengeluaran, melihat riwayat transaksi, serta mengetahui kondisi keuangannya melalui informasi saldo, total pemasukan, dan total pengeluaran. Setiap pengguna hanya dapat mengakses dan mengelola data transaksi miliknya sendiri.
 
-First, run the development server:
+## User Story
+
+Sebagai mahasiswa, saya ingin mencatat dan mengelola keuangan pribadi saya melalui aplikasi web yang sederhana, sehingga saya dapat mengetahui kondisi keuangan saya (saldo, pemasukan, dan pengeluaran) kapan saja tanpa perlu mencatat manual.
+
+## Daftar SRS
+
+| Kode   | Deskripsi | Acceptance Criteria | PIC |
+|--------|-----------|----------------------|-----|
+| SRS-01 | Autentikasi & Session Management, register, login, session, dan cookie preferensi. | - Pengguna dapat mendaftar menggunakan nama, email, dan password<br>- Password disimpan dalam bentuk hash, bukan plaintext<br>- Pengguna dapat masuk menggunakan email & password yang terdaftar<br>- Session tetap aktif selama masih berlaku, tanpa perlu login ulang<br>- Halaman yang membutuhkan autentikasi tidak bisa diakses tanpa login (redirect ke halaman login)<br>- Logout mengakhiri session dan memutus akses ke halaman yang butuh autentikasi<br>- Minimal satu preferensi pengguna disimpan menggunakan cookie | Syifa Aeni Mudrikah |
+| SRS-02 | Dashboard & Financial Overview, ringkasan keuangan pengguna. | - Dashboard menampilkan nama pengguna yang sedang login<br>- Dashboard menampilkan saldo (total pemasukan − total pengeluaran)<br>- Dashboard menampilkan total pemasukan dan total pengeluaran<br>- Dashboard menampilkan daftar transaksi terbaru<br>- Seluruh data yang ditampilkan hanya dihitung dari transaksi milik pengguna yang sedang login | Elza Khoirisma Carrynda |
+| SRS-03 | Transaction Management, CRUD transaksi, filter, dan otorisasi kepemilikan data. | - Pengguna dapat menambahkan transaksi pemasukan atau pengeluaran<br>- Pengguna dapat mengubah dan menghapus transaksi miliknya sendiri<br>- Permintaan ubah/hapus terhadap transaksi milik pengguna lain ditolak oleh server<br>- Pengguna dapat melihat riwayat seluruh transaksinya<br>- Riwayat transaksi dapat difilter berdasarkan jenis (pemasukan/pengeluaran)<br>- Hanya menampilkan transaksi milik pengguna yang sedang login | Revalina Salwa Aliya Wicaksono Prabowo |
+
+## Rincian User Story
+
+| Kode  | User Story | SRS |
+|-------|------------|-----|
+| US-01 | Sebagai pengguna, saya ingin mendaftar menggunakan nama, email & password, serta masuk menggunakan email & password, sehingga saya bisa mengakses aplikasi. | SRS-01 |
+| US-02 | Sebagai pengguna, saya ingin session saya bertahan selama masih berlaku dan halaman tertentu terproteksi, sehingga saya tidak perlu login ulang tapi data saya tetap aman. | SRS-01 |
+| US-03 | Sebagai pengguna, saya ingin logout dan aplikasi mengingat satu preferensi saya lewat cookie, sehingga sesi saya berakhir dengan aman dan pengalaman saya tetap personal. | SRS-01 |
+| US-04 | Sebagai pengguna, saya ingin melihat ringkasan keuangan saya di dashboard (nama, saldo, total pemasukan, total pengeluaran, transaksi terbaru), sehingga saya bisa langsung tahu kondisi keuangan saya begitu masuk aplikasi. | SRS-02 |
+| US-05 | Sebagai pengguna, saya ingin menambahkan transaksi pemasukan atau pengeluaran, sehingga saya bisa mencatat aktivitas keuangan saya. | SRS-03 |
+| US-06 | Sebagai pengguna, saya ingin mengubah dan menghapus transaksi milik saya, sehingga saya bisa memperbaiki atau membuang catatan yang salah. | SRS-03 |
+| US-07 | Sebagai pengguna, saya ingin melihat riwayat transaksi saya dan memfilternya berdasarkan jenis, sehingga saya bisa menelusuri histori keuangan sesuai kebutuhan. | SRS-03 |
+
+## Tech Stack
+
+- **Framework:** Next.js (App Router)
+- **Database:** PostgreSQL
+- **ORM:** Prisma
+- **Bahasa:** TypeScript
+- **Styling:** Tailwind CSS
+
+## Menjalankan Proyek
 
 ```bash
+# Clone repository
+git clone https://github.com/dndxray/keuanganku.git
+cd keuanganku
+
+# Install dependencies
+npm install
+
+# Konfigurasi environment
+# Buat file .env di root project, isi dengan:
+# DATABASE_URL="postgresql://user:password@localhost:5432/nama_database"
+
+# Jalankan migration database
+npx prisma migrate dev
+
+# Jalankan development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Buka [http://localhost:3000](http://localhost:3000) di browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Anggota Kelompok
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Nama | SRS | User Story |
+|------|-----|------------|
+| Syifa Aeni Mudrikah | SRS-01 | US-01, US-02, US-03 |
+| Elza Khoirisma Carrynda| SRS-02 | US-04 |
+| Revalina Salwa Aliya Wicaksono Prabowo | SRS-03 | US-05, US-06, US-07 |
