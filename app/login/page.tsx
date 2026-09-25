@@ -86,7 +86,7 @@ export default function LoginPage() {
 
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-[#511E1D]">
-            Expense Tracker
+            Keuanganku
           </h1>
 
           <p className="mt-2 text-gray-500">
