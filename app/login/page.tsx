@@ -2,6 +2,7 @@
 
 import {
   FormEvent,
+  Suspense,
   useState,
 } from "react";
 import Link from "next/link";
@@ -11,6 +12,14 @@ import {
 } from "next/navigation";
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
   const router = useRouter();
   const searchParams =
     useSearchParams();
@@ -64,7 +73,7 @@ export default function LoginPage() {
         return;
       }
 
-      router.push("/dashboard");
+      router.push("/");
       router.refresh();
     } catch {
       setError(
