@@ -2,13 +2,15 @@ import { prisma } from "@/lib/prisma";
 
 export async function getBudget(
   userId: string,
-  month: Date
+  month: string
 ) {
+  const normalizedMonth = month.length >= 7 ? month.slice(0, 7) : month;
+
   return await prisma.budget.findUnique({
     where: {
       userId_month: {
         userId,
-        month,
+        month: normalizedMonth,
       },
     },
   });
@@ -16,17 +18,28 @@ export async function getBudget(
 
 export async function createBudget(
   userId: string,
-  month: Date,
+  month: string,
   amount: number
 ) {
   if (amount <= 0) {
     throw new Error("INVALID_AMOUNT");
   }
 
-  return await prisma.budget.create({
-    data: {
+  const normalizedMonth = month.length >= 7 ? month.slice(0, 7) : month;
+
+  return await prisma.budget.upsert({
+    where: {
+      userId_month: {
+        userId,
+        month: normalizedMonth,
+      },
+    },
+    update: {
+      amount,
+    },
+    create: {
       userId,
-      month,
+      month: normalizedMonth,
       amount,
     },
   });

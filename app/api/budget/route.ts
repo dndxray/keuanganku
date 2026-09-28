@@ -1,157 +1,186 @@
-import { NextResponse } from "next/server";
-import {
-  getBudget,
-  createBudget,
-  updateBudget,
-} from "@/services/budget.service";
-import { getSessionUser } from "@/lib/auth";
+import { NextRequest, NextResponse } from "next/server";
+import { getCurrentUser } from "@/lib/auth";
+import { getMonthlyOverview, isValidMonth, currentMonth } from "@/lib/budget";
+import { createBudget, updateBudget } from "@/services/budget.service";
+import { prisma } from "@/lib/prisma";
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
-    const user = await getSessionUser();
-
+    const user = await getCurrentUser();
     if (!user) {
       return NextResponse.json(
-        { message: "Unauthorized" },
+        { error: "Unauthorized: Silakan login terlebih dahulu", message: "Unauthorized" },
         { status: 401 }
       );
     }
 
     const { searchParams } = new URL(request.url);
-    const month = searchParams.get("month");
+    const rawMonth = searchParams.get("month") || currentMonth();
+    const month = rawMonth.length >= 7 ? rawMonth.slice(0, 7) : rawMonth;
 
-    if (!month) {
+    if (!isValidMonth(month)) {
       return NextResponse.json(
-        { message: "Month is required" },
+        { error: "Format bulan tidak valid (YYYY-MM)", message: "Format bulan tidak valid (YYYY-MM)" },
         { status: 400 }
       );
     }
 
-    const budget = await getBudget(
-      user.id,
-      new Date(month)
-    );
+    const [overview, rawRecord] = await Promise.all([
+      getMonthlyOverview(user.id, month),
+      prisma.budget.findUnique({
+        where: { userId_month: { userId: user.id, month } },
+      }),
+    ]);
+
+    const budgetRecord = rawRecord
+      ? {
+          id: rawRecord.id,
+          month: rawRecord.month,
+          amount: Number(rawRecord.amount),
+        }
+      : null;
 
     return NextResponse.json({
-      budget,
+      success: true,
+      ...overview,
+      budget: overview.budget,
+      budgetRecord,
     });
-  } catch (error) {
-    console.error(error);
-
-    return NextResponse.json(
-      { message: "Internal server error" },
-      { status: 500 }
-    );
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Gagal memuat data anggaran";
+    return NextResponse.json({ error: message, message }, { status: 500 });
   }
 }
 
 export async function POST(request: Request) {
   try {
-    const user = await getSessionUser();
-
+    const user = await getCurrentUser();
     if (!user) {
       return NextResponse.json(
-        { message: "Unauthorized" },
+        { error: "Unauthorized: Silakan login terlebih dahulu", message: "Unauthorized" },
         { status: 401 }
       );
     }
 
     const body = await request.json();
+    const { month: rawMonth, amount } = body;
 
-    const { month, amount } = body;
-
-    if (!month || amount === undefined) {
+    if (!rawMonth || amount === undefined) {
       return NextResponse.json(
-        { message: "Month and amount are required" },
+        { error: "Bulan dan nominal anggaran wajib diisi", message: "Month and amount are required" },
         { status: 400 }
       );
     }
 
-    const budget = await createBudget(
-      user.id,
-      new Date(month),
-      Number(amount)
-    );
-
-    return NextResponse.json(
-      { budget },
-      { status: 201 }
-    );
-  } catch (error) {
-    console.error(error);
-
-    if (error instanceof Error) {
-      if (error.message === "INVALID_AMOUNT") {
-        return NextResponse.json(
-          { message: "Amount must be greater than 0" },
-          { status: 400 }
-        );
-      }
+    const month = rawMonth.length >= 7 ? rawMonth.slice(0, 7) : rawMonth;
+    if (!isValidMonth(month)) {
+      return NextResponse.json(
+        { error: "Format bulan tidak valid (YYYY-MM)", message: "Format bulan tidak valid" },
+        { status: 400 }
+      );
     }
 
+    const parsedAmount = Number(amount);
+    if (isNaN(parsedAmount) || parsedAmount <= 0) {
+      return NextResponse.json(
+        { error: "Nominal harus lebih dari 0", message: "Amount must be greater than 0" },
+        { status: 400 }
+      );
+    }
+
+    const budget = await createBudget(user.id, month, parsedAmount);
+
+    const formattedBudget = {
+      id: budget.id,
+      month: budget.month,
+      amount: Number(budget.amount),
+    };
+
     return NextResponse.json(
-      { message: "Failed to create budget" },
-      { status: 500 }
+      {
+        success: true,
+        budget: formattedBudget,
+        budgetRecord: formattedBudget,
+      },
+      { status: 201 }
     );
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message === "INVALID_AMOUNT") {
+      return NextResponse.json(
+        { error: "Nominal harus lebih dari 0", message: "Amount must be greater than 0" },
+        { status: 400 }
+      );
+    }
+
+    const message = error instanceof Error ? error.message : "Gagal menyimpan anggaran";
+    return NextResponse.json({ error: message, message }, { status: 500 });
   }
 }
 
 export async function PUT(request: Request) {
   try {
-    const user = await getSessionUser();
-
+    const user = await getCurrentUser();
     if (!user) {
       return NextResponse.json(
-        { message: "Unauthorized" },
+        { error: "Unauthorized: Silakan login terlebih dahulu", message: "Unauthorized" },
         { status: 401 }
       );
     }
 
     const body = await request.json();
+    const { budgetId, month: rawMonth, amount } = body;
 
-    const {
-      budgetId,
-      amount,
-    } = body;
-
-    if (!budgetId || amount === undefined) {
+    if (amount === undefined || (!budgetId && !rawMonth)) {
       return NextResponse.json(
-        { message: "Budget ID and amount are required" },
+        { error: "ID anggaran / bulan dan nominal wajib diisi", message: "Budget ID and amount are required" },
         { status: 400 }
       );
     }
 
-    const budget = await updateBudget(
-      user.id,
-      budgetId,
-      Number(amount)
-    );
+    const parsedAmount = Number(amount);
+    if (isNaN(parsedAmount) || parsedAmount <= 0) {
+      return NextResponse.json(
+        { error: "Nominal harus lebih dari 0", message: "Amount must be greater than 0" },
+        { status: 400 }
+      );
+    }
+
+    let budget;
+    if (budgetId) {
+      budget = await updateBudget(user.id, budgetId, parsedAmount);
+    } else {
+      const month = rawMonth.length >= 7 ? rawMonth.slice(0, 7) : rawMonth;
+      budget = await createBudget(user.id, month, parsedAmount);
+    }
+
+    const formattedBudget = {
+      id: budget.id,
+      month: budget.month,
+      amount: Number(budget.amount),
+    };
 
     return NextResponse.json({
-      budget,
+      success: true,
+      budget: formattedBudget,
+      budgetRecord: formattedBudget,
     });
-  } catch (error) {
-    console.error(error);
-
+  } catch (error: unknown) {
     if (error instanceof Error) {
       if (error.message === "INVALID_AMOUNT") {
         return NextResponse.json(
-          { message: "Amount must be greater than 0" },
+          { error: "Nominal harus lebih dari 0", message: "Amount must be greater than 0" },
           { status: 400 }
         );
       }
-
       if (error.message === "BUDGET_NOT_FOUND") {
         return NextResponse.json(
-          { message: "Budget not found" },
+          { error: "Anggaran tidak ditemukan", message: "Budget not found" },
           { status: 404 }
         );
       }
     }
 
-    return NextResponse.json(
-      { message: "Failed to update budget" },
-      { status: 500 }
-    );
+    const message = error instanceof Error ? error.message : "Gagal memperbarui anggaran";
+    return NextResponse.json({ error: message, message }, { status: 500 });
   }
 }

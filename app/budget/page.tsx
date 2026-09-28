@@ -1,11 +1,13 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 
 type Budget = {
   id: string;
   month: string;
-  amount: string;
+  amount: string | number;
 };
 
 export default function BudgetPage() {
@@ -18,20 +20,25 @@ export default function BudgetPage() {
   async function loadBudget(selectedMonth: string) {
     if (!selectedMonth) return;
 
-    const response = await fetch(
-      `/api/budget?month=${selectedMonth}-01`
-    );
+    try {
+      const response = await fetch(
+        `/api/budget?month=${selectedMonth}`
+      );
 
-    const data = await response.json();
+      const data = await response.json();
 
-    if (response.ok) {
-      setBudget(data.budget);
+      if (response.ok) {
+        const b = data.budgetRecord ?? (data.budget?.id ? data.budget : null);
+        setBudget(b);
 
-      if (data.budget) {
-        setAmount(String(data.budget.amount));
-      } else {
-        setAmount("");
+        if (b) {
+          setAmount(String(b.amount));
+        } else {
+          setAmount("");
+        }
       }
+    } catch {
+      // Ignore fetch error on load
     }
   }
 
@@ -62,7 +69,7 @@ export default function BudgetPage() {
                 amount: Number(amount),
               }
             : {
-                month: `${month}-01`,
+                month: month,
                 amount: Number(amount),
               }
         ),
@@ -71,11 +78,12 @@ export default function BudgetPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        setMessage(data.message || "Terjadi kesalahan");
+        setMessage(data.message || data.error || "Terjadi kesalahan");
         return;
       }
 
-      setBudget(data.budget);
+      const b = data.budgetRecord ?? data.budget;
+      setBudget(b);
       setMessage(
         budget
           ? "Budget berhasil diperbarui"
@@ -89,106 +97,112 @@ export default function BudgetPage() {
   }
 
   return (
-  <main className="min-h-screen bg-[#f8f6f3] p-6 md:p-10">
-    <div className="mx-auto max-w-4xl">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-[#511E1D]">
-          Monthly Budget
-        </h1>
-        <p className="mt-2 text-sm text-gray-500">
-          Atur batas pengeluaran bulananmu agar keuangan lebih terkontrol.
-        </p>
-      </div>
-
-      {/* Budget Card */}
-      <div className="rounded-2xl bg-white p-6 shadow-sm md:p-8">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Bulan */}
-          <div>
-            <label
-              htmlFor="month"
-              className="mb-2 block text-sm font-semibold text-gray-700"
-            >
-              Bulan
-            </label>
-
-            <input
-              id="month"
-              type="month"
-              value={month}
-              onChange={(e) => setMonth(e.target.value)}
-              required
-              className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-gray-700 outline-none transition focus:border-[#511E1D] focus:ring-2 focus:ring-[#511E1D]/10"
-            />
-          </div>
-
-          {/* Anggaran */}
-          <div>
-            <label
-              htmlFor="amount"
-              className="mb-2 block text-sm font-semibold text-gray-700"
-            >
-              Anggaran Pengeluaran
-            </label>
-
-            <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-medium text-gray-500">
-                Rp
-              </span>
-
-              <input
-                id="amount"
-                type="number"
-                min="1"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                placeholder="Masukkan nominal budget"
-                required
-                className="w-full rounded-xl border border-gray-200 bg-white py-3 pl-12 pr-4 text-gray-700 outline-none transition focus:border-[#511E1D] focus:ring-2 focus:ring-[#511E1D]/10"
-              />
-            </div>
-          </div>
-
-          {/* Button */}
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-xl bg-[#511E1D] px-5 py-3 font-semibold text-white transition hover:bg-[#3f1716] disabled:cursor-not-allowed disabled:opacity-50"
+    <main className="min-h-screen bg-[#f8f6f3] p-6 md:p-10">
+      <div className="mx-auto max-w-4xl">
+        {/* Navigation & Header */}
+        <div className="mb-8">
+          <Link
+            href="/anggaran"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#511E1D] hover:underline mb-4"
           >
-            {loading
-              ? "Menyimpan..."
-              : budget
-                ? "Ubah Budget"
-                : "Simpan Budget"}
-          </button>
-
-          {/* Message */}
-          {message && (
-            <div className="rounded-xl bg-[#f5eeee] px-4 py-3 text-sm font-medium text-[#511E1D]">
-              {message}
-            </div>
-          )}
-        </form>
-      </div>
-
-      {/* Existing Budget */}
-      {budget && (
-        <div className="mt-6 rounded-2xl bg-white p-6 shadow-sm">
-          <p className="text-sm text-gray-500">
-            Budget bulan yang dipilih
-          </p>
-
-          <p className="mt-2 text-2xl font-bold text-[#511E1D]">
-            Rp {Number(budget.amount).toLocaleString("id-ID")}
-          </p>
-
-          <p className="mt-1 text-sm text-gray-400">
-            Budget sudah tersimpan dan dapat diubah kembali.
+            <ArrowLeft className="w-4 h-4" /> Kembali ke Anggaran Bulanan
+          </Link>
+          <h1 className="text-3xl font-bold text-[#511E1D]">
+            Monthly Budget
+          </h1>
+          <p className="mt-2 text-sm text-gray-500">
+            Atur batas pengeluaran bulananmu agar keuangan lebih terkontrol.
           </p>
         </div>
-      )}
-    </div>
-  </main>
-);
+
+        {/* Budget Card */}
+        <div className="rounded-2xl bg-white p-6 shadow-sm md:p-8">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Bulan */}
+            <div>
+              <label
+                htmlFor="month"
+                className="mb-2 block text-sm font-semibold text-gray-700"
+              >
+                Bulan
+              </label>
+
+              <input
+                id="month"
+                type="month"
+                value={month}
+                onChange={(e) => setMonth(e.target.value)}
+                required
+                className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-gray-700 outline-none transition focus:border-[#511E1D] focus:ring-2 focus:ring-[#511E1D]/10"
+              />
+            </div>
+
+            {/* Anggaran */}
+            <div>
+              <label
+                htmlFor="amount"
+                className="mb-2 block text-sm font-semibold text-gray-700"
+              >
+                Anggaran Pengeluaran
+              </label>
+
+              <div className="relative">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-medium text-gray-500">
+                  Rp
+                </span>
+
+                <input
+                  id="amount"
+                  type="number"
+                  min="1"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  placeholder="Masukkan nominal budget"
+                  required
+                  className="w-full rounded-xl border border-gray-200 bg-white py-3 pl-12 pr-4 text-gray-700 outline-none transition focus:border-[#511E1D] focus:ring-2 focus:ring-[#511E1D]/10"
+                />
+              </div>
+            </div>
+
+            {/* Button */}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full rounded-xl bg-[#511E1D] px-5 py-3 font-semibold text-white transition hover:bg-[#3f1716] disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {loading
+                ? "Menyimpan..."
+                : budget
+                  ? "Ubah Budget"
+                  : "Simpan Budget"}
+            </button>
+
+            {/* Message */}
+            {message && (
+              <div className="rounded-xl bg-[#f5eeee] px-4 py-3 text-sm font-medium text-[#511E1D]">
+                {message}
+              </div>
+            )}
+          </form>
+        </div>
+
+        {/* Existing Budget */}
+        {budget && (
+          <div className="mt-6 rounded-2xl bg-white p-6 shadow-sm">
+            <p className="text-sm text-gray-500">
+              Budget bulan yang dipilih
+            </p>
+
+            <p className="mt-2 text-2xl font-bold text-[#511E1D]">
+              Rp {Number(budget.amount).toLocaleString("id-ID")}
+            </p>
+
+            <p className="mt-1 text-sm text-gray-400">
+              Budget sudah tersimpan dan dapat diubah kembali.
+            </p>
+          </div>
+        )}
+      </div>
+    </main>
+  );
 }

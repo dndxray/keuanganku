@@ -3,12 +3,12 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Bell, ChevronDown, LayoutDashboard, LogOut, Menu, Receipt, User } from "lucide-react";
+import { Bell, ChevronDown, LayoutDashboard, LogOut, Menu, PiggyBank, Receipt, User } from "lucide-react";
 
 type Props = {
   userName: string;
   userEmail?: string;
-  active: "dashboard" | "transaksi";
+  active: "dashboard" | "transaksi" | "anggaran";
   children: React.ReactNode;
 };
 
@@ -128,6 +128,15 @@ export default function AppShell({ userName, userEmail, active, children }: Prop
               >
                 <Receipt className="w-5 h-5 shrink-0" />
                 {isOpen && <span className="text-sm font-medium">Transaksi</span>}
+              </Link>
+
+              <Link
+                href="/anggaran"
+                className={itemClass(active === "anggaran")}
+                title="Anggaran Bulanan"
+              >
+                <PiggyBank className="w-5 h-5 shrink-0" />
+                {isOpen && <span className="text-sm font-medium">Anggaran</span>}
               </Link>
 
               <button
