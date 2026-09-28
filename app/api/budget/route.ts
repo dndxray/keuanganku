@@ -4,11 +4,12 @@ import {
   createBudget,
   updateBudget,
 } from "@/services/budget.service";
-import { getSessionUser } from "@/lib/auth";
+getCurrentUser()
+import { getCurrentUser } from "@/lib/auth";
 
 export async function GET(request: Request) {
   try {
-    const user = await getSessionUser();
+    const user = await getCurrentUser();
 
     if (!user) {
       return NextResponse.json(
@@ -47,7 +48,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const user = await getSessionUser();
+    const user = await getCurrentUser();
 
     if (!user) {
       return NextResponse.json(
@@ -98,7 +99,7 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
   try {
-    const user = await getSessionUser();
+    const user = await getCurrentUser();
 
     if (!user) {
       return NextResponse.json(
